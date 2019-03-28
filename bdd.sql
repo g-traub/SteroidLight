@@ -1,0 +1,8 @@
+CREATE DATABASE steroidbdd CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+USE steroidbdd;
+
+CREATE table pictures (
+  id INT(3) PRIMARY KEY NOT NULL AUTO_INCREMENT ,
+  url VARCHAR(2083) NOT NULL,
+  path VARCHAR(255) NOT NULL
+)
