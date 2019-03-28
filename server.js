@@ -52,6 +52,7 @@ const server = http.createServer((req, res) => {
           con.query(sql, function (err, result) {
             if (err) throw err;
             console.log("1 record inserted");
+            //Displays the image
             fs.readFile(filePath, function(err, data) {
               if(err) throw err;
               res.statusCode = 200;
@@ -65,6 +66,7 @@ const server = http.createServer((req, res) => {
       else{
          filePath = result[0].path;
           console.log(filePath);
+          //Displays the image
           fs.readFile(filePath, function(err, data) {
             if(err) throw err;
             res.statusCode = 200;
@@ -73,7 +75,6 @@ const server = http.createServer((req, res) => {
             return res.end();
           })
       }
-      
     })
   }
 });
