@@ -73,9 +73,9 @@ const server = http.createServer((req, res) => {
         download(`http:/${imgUrl}`, `${randomStr}`, function(){
           console.log('done'); //fichier bien téléchargé
           let filePath =  `${__dirname}/img/${randomStr}`;
-          let arrayPath = filePath.split('/');
+          
           for (size of sizes){
-            let sizedPath = `${size}-${arrayPath[arrayPath.length-1]}`;
+            let sizedPath = `${__dirname}/img/${size}-${randomStr}`;
             //resize image
             resize(filePath,  sizedPath, size);
           }
@@ -88,6 +88,7 @@ const server = http.createServer((req, res) => {
             if (err) throw err;
             console.log("1 record inserted");
             //Displays the image
+            console.log(filePath);
             fs.readFile(filePath, function(err, data) {
               if(err) throw err;
               res.statusCode = 200;
@@ -99,16 +100,20 @@ const server = http.createServer((req, res) => {
         })
       }
       else{
-         filePath = result[0].path;
-          console.log(filePath);
-          //Displays the image
-          fs.readFile(filePath, function(err, data) {
-            if(err) throw err;
-            res.statusCode = 200;
-            res.setHeader('Content-Type', 'image/jpeg');
-            res.write(data);
-            return res.end();
-          })
+        filePath = result[0].path;
+        //Récuperer la taille du navigateur
+        //TODO : ARRIVER A EXECUTER ÇA COTÉ CLIENT ET RÉCUPERER LE RÉSULTAT
+        /* console.log(window.innerWidth);
+         console.log(window.devicePixelRatio); */
+       
+        //Displays the image
+        fs.readFile(filePath, function(err, data) {
+          if(err) throw err;
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'image/jpeg');
+          res.write(data);
+          return res.end();
+        })
       }
     })
   }
