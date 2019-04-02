@@ -1,4 +1,5 @@
 const http = require("http");
+/* const { parse } = require('querystring'); */
 
 const hostname = '127.0.0.1';
 const port = 3000;
@@ -11,6 +12,8 @@ const server = http.createServer((req, res) => {
     });
     req.on('end', () => {
       console.log(body);
+      body = JSON.parse(body);
+      console.log(body.width);
       res.end('ok');
     });
   }
