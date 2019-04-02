@@ -125,7 +125,7 @@ const server = http.createServer((req, res) => {
                 if (test === 3){
                   deleteFile(filePath);
                   let prefix;
-                  if (browserWidth<450){
+                  if (browserWidth<510){
                     prefix = '300-';
                   } else if (browserWidth<700){
                     prefix = '600-';
@@ -156,11 +156,11 @@ const server = http.createServer((req, res) => {
         }
         else{
           let prefix;
-          if (browserWidth<450){
+          if (browserWidth<510){
             prefix = '300-';
-          } else if (browserWidth<700){
+          } else if (browserWidth<800){
             prefix = '600-';
-          } else if (browserWidth>700){
+          } else if (browserWidth>800){
             prefix = '800-';
           }
           filePath = result[0].path.split('/');
