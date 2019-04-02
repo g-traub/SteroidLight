@@ -26,13 +26,16 @@ const deleteFile = filepath => {
   })
 }
 const resize = function(inputFile, outputFile, newWidth){
-  sharp(inputFile).resize({ width: newWidth}).toFile(outputFile)
-    .then(function(newFileInfo) {
-        console.log("Success");
-    })
-    .catch(function(err) {
-        console.log("Error occured");
-    });
+  return new Promise ((resolve, reject) => {
+    sharp(inputFile).resize({ width: newWidth}).toFile(outputFile)
+      .then(function(newFileInfo) {
+          console.log("Success");
+          resolve();
+      })
+      .catch(function(err) {
+          console.log("Error occured");
+      });
+  });
 }
    
 const download = function(uri, filename, callback){
@@ -50,6 +53,7 @@ let sizes = [300,600,800];
 
 //Create HTTP server and listen on port 3000 for requests
 const server = http.createServer((req, res) => {
+  
   if (req.url != '/favicon.ico') { //Blocks the request for the favicon
     const q = url.parse(req.url, true);
     let imgUrl = q.pathname;
@@ -73,16 +77,27 @@ const server = http.createServer((req, res) => {
         download(`http:/${imgUrl}`, `${randomStr}`, function(){
           console.log('done'); //fichier bien téléchargé
           let filePath =  `${__dirname}/img/${randomStr}`;
-          
-          for (size of sizes){
-            let sizedPath = `${__dirname}/img/${size}-${randomStr}`;
+          //TODO: CHANGE THE PROMISE TO SKIP THE UNNECESSARY TEST AND APPLY ONLY AFTER THE 3 ARE MADE.
+          let test = 0;
+          for (let i = 0 ; i<sizes.length ; i++){
+            let sizedPath = `${__dirname}/img/${sizes[i]}-${randomStr}`;
             //resize image
-            resize(filePath,  sizedPath, size);
+           /*  if (i<sizes.length-1){
+              resize(filePath, sizedPath, sizes[i]);
+            }
+            else {
+              resize(filePath, sizedPath, sizes[i]).then(()=>deleteFile(filePath));
+            } */
+            resize(filePath, sizedPath, sizes[i]).then(()=>{
+              test++;
+              if (test === 3){
+                deleteFile(filePath);
+              }
+            })
           }
-          
+
           //supprime l'image d'origine
-          //TODO: CHANGE THE TIMEOUT TO A PROMISE OR AS A CALLBACK TO RESIZE
-          setTimeout( () => deleteFile(filePath), 3000);
+          
           let sql = `INSERT INTO pictures (url, path) VALUES (${mysql.escape(imgUrl)}, '${filePath}')`;
           con.query(sql, function (err, result) {
             if (err) throw err;
@@ -101,19 +116,21 @@ const server = http.createServer((req, res) => {
       }
       else{
         filePath = result[0].path;
+        console.log('pas d\'image a montrer');
+        return;
         //Récuperer la taille du navigateur
         //TODO : ARRIVER A EXECUTER ÇA COTÉ CLIENT ET RÉCUPERER LE RÉSULTAT
         /* console.log(window.innerWidth);
          console.log(window.devicePixelRatio); */
        
         //Displays the image
-        fs.readFile(filePath, function(err, data) {
+       /*  fs.readFile(filePath, function(err, data) {
           if(err) throw err;
           res.statusCode = 200;
           res.setHeader('Content-Type', 'image/jpeg');
           res.write(data);
           return res.end();
-        })
+        }) */
       }
     })
   }
