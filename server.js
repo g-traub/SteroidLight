@@ -127,9 +127,9 @@ const server = http.createServer((req, res) => {
                   let prefix;
                   if (browserWidth<510){
                     prefix = '300-';
-                  } else if (browserWidth<700){
+                  } else if (browserWidth<800){
                     prefix = '600-';
-                  } else if (browserWidth<700){
+                  } else if (browserWidth>800){
                     prefix = '800-';
                   }
                   filePath = filePath.split('/');
