@@ -94,6 +94,7 @@ const server = http.createServer((req, res) => {
       console.log(size);\
       postData('http://localhost:3000', size);\
       </script></body>");
+      res.end();
     }
     if (req.method === 'POST'){
       let body = '';
@@ -109,6 +110,7 @@ const server = http.createServer((req, res) => {
           /* TO DO: HANDLE ALL IMAGE TYPES (JPEG, PNG, GIF, WEBP, TIFF) */
           let randomStr = `${Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)}.jpg`;
           //Downloads the image & stores it
+          console.log(imgUrl);
           download(`http:/${imgUrl}`, `${randomStr}`, function(){
             console.log('done'); //fichier bien téléchargé
             let filePath =  `${__dirname}/img/${randomStr}`;
