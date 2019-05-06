@@ -1,3 +1,4 @@
+/* CA MARCHE SI L'IMAGE EST DANS LA BDD FAIRE AUSSI SI ELLE Y EST PAS */
 //Load modules
 const http = require("http");
 const fs = require('fs');
@@ -52,142 +53,172 @@ const download = function(uri, filename, callback){
 let sizes = [300,600,800];
 let browserWidth = 0;
 let imgUrl = '';
-let inDb;
-let filePath;
+let filePath;//problématique a déplacer ou a tester dans le code car pas forcement réévaluer
+let inDb; //a besoin d'être sinon elle se remis à zéro entre les deux requetes GET et POST ; test est répété à chaque fois donc la variable ne conserve jamais la même valeur pour deux images
 
 //Create HTTP server and listen on port 3000 for requests
 const server = http.createServer((req, res) => {
-  if (req.url !== '/favicon.ico'){
-    if (req.method === 'GET'){
-      const q = url.parse(req.url, true);
-      imgUrl = q.pathname;
-      let sql = 'SELECT path FROM pictures WHERE url =' + mysql.escape(imgUrl);
-      con.query(sql, function (err, result) {
-        filePath = null;
-        //if imageUrl not in database
-        if(result.length === 0){
-          inDb = false;
-          if (imgUrl === '/'){
-            console.log('no image');
-            return;
-          }
-        }
-        else{
-          inDb = true;
-          filePath = result[0].path;
-        }
-      });
+   //initialise la variable qui sert pour le test
+  if (req.url === '/favicon.ico')return;
+  if (req.method === 'GET' && !req.url.startsWith("/img/")){ //la deuxieme condition teste si le get est celui d'après la redirection
+    console.log('get');
+    //requete GET faite lorsque la page est actualisée
+    const q = url.parse(req.url, true);
+    imgUrl = q.pathname;
+    if (imgUrl === '/'){
+      console.log('no image');
       res.statusCode = 200;
       res.setHeader('Content-Type', 'text/html');
-      res.write("<html><body><script>\
-      const size = {width: window.innerWidth, pixelRatio: window.devicePixelRatio};\
-      function postData(url, data){\
-        return fetch(url, {\
-          credentials: 'same-origin',\
-          method:\'POST\',\
-          body: JSON.stringify(data),\
-          headers: new Headers({\
-            \'Content-Type\' : 'application/json'\
-          }),\
-        })\
-      }\
-      console.log(size);\
-      postData('http://localhost:3000', size);\
-      </script></body>");
+      res.write("<html><body>No url image</body></html>");
       res.end();
+      return;
     }
-    if (req.method === 'POST'){
-      let body = '';
-      req.on('data' , chunk => {
-      body += chunk.toString();
-      });
-      req.on('end', () => {
-        body = JSON.parse(body);
-        browserWidth = body.width;
-        console.log(body.width);
-        if (!inDb){
-          //Creates a random name
-          /* TO DO: HANDLE ALL IMAGE TYPES (JPEG, PNG, GIF, WEBP, TIFF) */
-          let randomStr = `${Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)}.jpg`;
-          //Downloads the image & stores it
-          console.log(imgUrl);
-          download(`http:/${imgUrl}`, `${randomStr}`, function(){
-            console.log('done'); //fichier bien téléchargé
-            let filePath =  `${__dirname}/img/${randomStr}`;
-            //TODO: CHANGE THE PROMISE TO SKIP THE UNNECESSARY TEST AND APPLY ONLY AFTER THE 3 ARE MADE.
-            let test = 0;
-            for (let i = 0 ; i<sizes.length ; i++){
-              let sizedPath = `${__dirname}/img/${sizes[i]}-${randomStr}`;
-              //resize image
-            /*  if (i<sizes.length-1){
-                resize(filePath, sizedPath, sizes[i]);
-              }
-              else {
-                resize(filePath, sizedPath, sizes[i]).then(()=>deleteFile(filePath));
-              } */
-              //supprime l'image d'origine
-              resize(filePath, sizedPath, sizes[i]).then(()=>{
-                test++;
-                if (test === 3){
-                  deleteFile(filePath);
-                  let prefix;
-                  if (browserWidth<510){
-                    prefix = '300-';
-                  } else if (browserWidth<800){
-                    prefix = '600-';
-                  } else if (browserWidth>800){
-                    prefix = '800-';
-                  }
-                  filePath = filePath.split('/');
-                  filePath[filePath.length-1] = prefix + filePath[filePath.length-1];
-                  filePath = filePath.join('/');
-                  console.log(filePath);
-                  fs.readFile(filePath, function(err, data) {
-                    if(err) throw err;
-                    console.log('read not in Db')
-                    res.statusCode = 200;
-                    res.setHeader('Content-Type', 'image/jpeg');
-                    res.write(data);
-                    res.end();
-                  })
-                }
-              })
-            }
-            let sql = `INSERT INTO pictures (url, path) VALUES (${mysql.escape(imgUrl)}, '${filePath}')`;
-            con.query(sql, function (err, result) {
-              if (err) throw err;
-              console.log("1 record inserted");
-            });
-          })
-        }
-        else if(inDb){
-          let prefix;
-          if (browserWidth<510){
-            prefix = '300-';
-          } else if (browserWidth<800){
-            prefix = '600-';
-          } else if (browserWidth>800){
-            prefix = '800-';
-          }
-          filePath = filePath.split('/');
-          filePath[filePath.length-1] = prefix + filePath[filePath.length-1];
-          filePath = filePath.join('/');
-          console.log(filePath);
-  
-          //Displays the image
-          fs.readFile(filePath, function(err, data) {
-            if(err) throw err;
-            console.log('read inDB');
-            res.statusCode = 200;
-            res.setHeader('Content-Type', 'image/jpeg');
-            res.write(data);
-            res.end();
-          })  
-        }
-      });
-    }
+    //Vérification si l'image est dans la bdd
+    let sql = 'SELECT path FROM pictures WHERE url =' + mysql.escape(imgUrl);
+    con.query(sql, function (err, result) {
+      if (err) throw err;
+      console.log(result.length);
+      filePath = null;
+      //if imageUrl not in database
+      if(result.length === 0){
+        inDb = false;
+      }
+      else{
+        inDb = true;
+        filePath = result[0].path;
+      }
+    });
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/html');
+    res.write("<html><body><script>\
+    const size = {width: window.innerWidth, pixelRatio: window.devicePixelRatio};\
+    function postData(url, data){\
+      return fetch(url, {\
+        mode:\'same-origin'\,\
+        method:\'POST\',\
+        body: JSON.stringify(data),\
+        headers: new Headers({\
+          'Accept': 'application/json',\
+          \'Content-Type\' : 'application/json'\
+        }),\
+      })\
+    }\
+    console.log(size);\
+    postData('http://127.0.0.1:3000', size)\
+    .then(function(res){ \
+      console.log(res);\
+      if(res.redirected){\
+        window.location = res.url\
+      } \
+    })\
+    .catch(function(res){ console.log(res) });\
+    </script></body>");
+    res.end();
   }
-});  
+  else if(req.method === 'GET' && req.url.startsWith("/img/")){ //si apres redirection (url de l'image locale, on l'affiche)
+    console.log('after redirect', req.url);
+    const stream = fs.createReadStream('.'+ req.url);
+    stream.pipe(res);
+  }
+  if (req.method === 'POST'){
+    let body = '';
+    req.on('data' , chunk => {
+    body += chunk.toString();
+    });
+    req.on('end', () => {
+      body = JSON.parse(body);
+      browserWidth = body.width;
+      console.log(body.width);
+      if (!inDb){
+/*         //Creates a random name
+        //TO DO: HANDLE ALL IMAGE TYPES (JPEG, PNG, GIF, WEBP, TIFF)
+        let randomStr = `${Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)}.jpg`;
+        //Downloads the image & stores it
+        console.log(imgUrl);
+        download(`http:/${imgUrl}`, `${randomStr}`, function(){
+          console.log('done'); //fichier bien téléchargé
+          let filePath =  `${__dirname}/img/${randomStr}`;
+          //TODO: CHANGE THE PROMISE TO SKIP THE UNNECESSARY TEST AND APPLY ONLY AFTER THE 3 ARE MADE.
+          let test = 0;
+          for (let i = 0 ; i<sizes.length ; i++){
+            let sizedPath = `${__dirname}/img/${sizes[i]}-${randomStr}`;
+            
+            //resize image
+            resize(filePath, sizedPath, sizes[i]).then(()=>{
+              test++;
+              if (test === 3){
+                deleteFile(filePath); //supprime l'original
+                let prefix;
+                if (browserWidth<510){
+                  prefix = '300-';
+                } else if (browserWidth<800){
+                  prefix = '600-';
+                } else if (browserWidth>800){
+                  prefix = '800-';
+                }
+                //ajout du prefix dans le filepath
+                filePath = filePath.split('/');
+                filePath[filePath.length-1] = prefix + filePath[filePath.length-1];
+                filePath = filePath.join('/');
+                console.log(filePath);
+                //lecture de l'image depuis le stockage local
+                fs.readFile(filePath, function(err, data) {
+                  if(err) throw err;
+                  console.log('read not in Db')
+                  console.log(data);
+                  res.statusCode = 200;
+                  res.setHeader('Content-Type', 'image/jpeg');
+                  res.write(data);
+                  res.end();
+                })
+              }
+            })
+          }
+          let sql = `INSERT INTO pictures (url, path) VALUES (${mysql.escape(imgUrl)}, '${filePath}')`;
+          con.query(sql, function (err, result) {
+            if (err) throw err;
+            console.log("1 record inserted");
+          });
+        }) */
+      }
+      else if(inDb){
+        console.log('inDB');
+        let prefix;
+        if (browserWidth<510){
+          prefix = '300-';
+        } else if (browserWidth<800){
+          prefix = '600-';
+        } else if (browserWidth>800){
+          prefix = '800-';
+        }
+        //récupere le filepath et rajoute le préfixe (pour éviter de stocker trois chemins pour chaque image)
+        filePath = filePath.split('/');
+        
+        filePath[filePath.length-1] = prefix + filePath[filePath.length-1];
+        filePath = filePath.slice(filePath.length-2);
+        filePath = filePath.join('/');
+        console.log(filePath);
+        let fullUrl = 'http://' +hostname+':'+port+'/'+filePath;
+        console.log(fullUrl);
+        //Displays the image
+        res.writeHead(301, {
+          'Location': fullUrl
+        });
+        res.end();
+/*         const stream = fs.createReadStream(filePath);
+        stream.pipe(res); */
+
+        /* fs.readFile(filePath, function(err, data) {
+          if(err) throw err;
+          console.log('read inDB');
+          console.log(data);
+          res.setHeader('Content-Type', 'image/jpeg');
+          res.end(data);
+        }) */  
+      }
+    });
+  }
+}); 
 //listen for request on port 3000, and as a callback function have the port listened on logged
 server.listen(port, hostname, () => {
   console.log(`Server running at http://${hostname}:${port}/`);

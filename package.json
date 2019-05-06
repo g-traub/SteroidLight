@@ -1,0 +1,28 @@
+{
+  "name": "steroid",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/g-traub/Steroid.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/g-traub/Steroid/issues"
+  },
+  "homepage": "https://github.com/g-traub/Steroid#readme",
+  "dependencies": {
+    "mysql": "^2.17.1",
+    "request": "^2.88.0",
+    "sharp": "^0.22.1"
+  },
+  "devDependencies": {
+    "nodemon": "^1.19.0"
+  }
+}
