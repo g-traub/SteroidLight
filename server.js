@@ -53,7 +53,7 @@ const download = function(uri, filename, callback){
 let sizes = [300,600,800];
 let browserWidth = 0;
 let imgUrl = '';
-let filePath;//problématique a déplacer ou a tester dans le code car pas forcement réévaluer
+let filePath;//problématique a déplacer ou a tester dans le code car pas forcement réévaluer !!quand on actualise et pas quand on appuie sur enter!!
 let inDb; //a besoin d'être sinon elle se remis à zéro entre les deux requetes GET et POST ; test est répété à chaque fois donc la variable ne conserve jamais la même valeur pour deux images
 
 //Create HTTP server and listen on port 3000 for requests
@@ -130,8 +130,8 @@ const server = http.createServer((req, res) => {
       browserWidth = body.width;
       console.log(body.width);
       if (!inDb){
-/*         //Creates a random name
         //TO DO: HANDLE ALL IMAGE TYPES (JPEG, PNG, GIF, WEBP, TIFF)
+        //Creates a random name
         let randomStr = `${Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)}.jpg`;
         //Downloads the image & stores it
         console.log(imgUrl);
@@ -159,18 +159,15 @@ const server = http.createServer((req, res) => {
                 //ajout du prefix dans le filepath
                 filePath = filePath.split('/');
                 filePath[filePath.length-1] = prefix + filePath[filePath.length-1];
+                filePath = filePath.slice(filePath.length-2);//Récupère juste l'adresse relative
                 filePath = filePath.join('/');
                 console.log(filePath);
-                //lecture de l'image depuis le stockage local
-                fs.readFile(filePath, function(err, data) {
-                  if(err) throw err;
-                  console.log('read not in Db')
-                  console.log(data);
-                  res.statusCode = 200;
-                  res.setHeader('Content-Type', 'image/jpeg');
-                  res.write(data);
-                  res.end();
-                })
+                //Redirects to image path
+                let fullUrl = 'http://' +hostname+':'+port+'/'+filePath;
+                res.writeHead(301, {
+                  'Location': fullUrl
+                });
+                res.end();
               }
             })
           }
@@ -179,7 +176,7 @@ const server = http.createServer((req, res) => {
             if (err) throw err;
             console.log("1 record inserted");
           });
-        }) */
+        })
       }
       else if(inDb){
         console.log('inDB');
@@ -193,28 +190,17 @@ const server = http.createServer((req, res) => {
         }
         //récupere le filepath et rajoute le préfixe (pour éviter de stocker trois chemins pour chaque image)
         filePath = filePath.split('/');
-        
         filePath[filePath.length-1] = prefix + filePath[filePath.length-1];
-        filePath = filePath.slice(filePath.length-2);
+        filePath = filePath.slice(filePath.length-2);//Récupère juste l'adresse relative
         filePath = filePath.join('/');
         console.log(filePath);
         let fullUrl = 'http://' +hostname+':'+port+'/'+filePath;
         console.log(fullUrl);
-        //Displays the image
+        //Redirects to image path
         res.writeHead(301, {
           'Location': fullUrl
         });
         res.end();
-/*         const stream = fs.createReadStream(filePath);
-        stream.pipe(res); */
-
-        /* fs.readFile(filePath, function(err, data) {
-          if(err) throw err;
-          console.log('read inDB');
-          console.log(data);
-          res.setHeader('Content-Type', 'image/jpeg');
-          res.end(data);
-        }) */  
       }
     });
   }
