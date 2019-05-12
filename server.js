@@ -1,4 +1,3 @@
-/* CA MARCHE SI L'IMAGE EST DANS LA BDD FAIRE AUSSI SI ELLE Y EST PAS */
 //Load modules
 const http = require("http");
 const fs = require('fs');
@@ -19,7 +18,6 @@ const con = mysql.createConnection({
 })
 let localPath;
 
-//TODO gérer les paths pour windows ??
 const deleteFile = filepath => {
   fs.unlink(filepath, (err) => {
     if (err) throw err;
@@ -53,7 +51,7 @@ const download = function(uri, filename, callback){
 let sizes = [300,600,800];
 let browserWidth = 0;
 let imgUrl = '';
-let filePath;//problématique a déplacer ou a tester dans le code car pas forcement réévaluer !!quand on actualise et pas quand on appuie sur enter!!
+let filePath;
 let inDb; //a besoin d'être sinon elle se remis à zéro entre les deux requetes GET et POST ; test est répété à chaque fois donc la variable ne conserve jamais la même valeur pour deux images
 
 //Create HTTP server and listen on port 3000 for requests
